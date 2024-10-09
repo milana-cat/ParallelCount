@@ -27,6 +27,17 @@ namespace ParallelSandBox
                 N = int.Parse(Console.ReadLine());
                 Console.Write("Введите количество потоков: ");
                 int numberOfThreads = int.Parse(Console.ReadLine());
+                int[] numbers = new int[N];
+
+                // Создаём экземпляр Random
+                Random random = new Random();
+
+                // Заполняем массив случайными числами от 1 до 100
+                for (int i = 0; i < N; i++)
+                {
+                    numbers[i] = random.Next(1, 100001); // Генерация числа от 1 до 100
+                }
+
 
 
                 Thread[] threads = new Thread[numberOfThreads];
@@ -38,11 +49,11 @@ namespace ParallelSandBox
                     int start = i * range + 1;
                     int end = (i == numberOfThreads - 1) ? N : (i + 1) * range;
 
-                    threads[i] = new Thread(() => SumRange(start, end));
+                    threads[i] = new Thread(() => SumRange(start, end, numbers));
                     threads[i].Start();
                 }
 
-                // Ожидание завершения всех потоков
+
                 for (int i = 0; i < numberOfThreads; i++)
                 {
                     threads[i].Join();
@@ -51,18 +62,19 @@ namespace ParallelSandBox
                 long ticksForBuilder = sw.ElapsedMilliseconds;
                 Console.WriteLine("Производительность = " + ticksForBuilder);
                 sw.Reset();
-                Console.WriteLine($"Сумма всех чисел от 1 до {N} равна {sum}");
+                Console.WriteLine($"Сумма всех чисел  равна {sum}");
                 Console.ReadKey();
             }
         }
 
-        static void SumRange(int start, int end)
+
+        static void SumRange(int start, int end, int[] numbers)
         {
             long localSum = 0;
 
-            for (int i = start; i <= end; i++)
+            for (int i = start-1; i < end; i++)
             {
-                localSum += i;
+                localSum += numbers[i];
             }
 
             // Блокировка для безопасного доступа к переменной sum
