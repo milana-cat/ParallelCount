@@ -4,44 +4,73 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 
 
 namespace ParallelSandBox
 {
+
     internal class Program
     {
+        private static long sum = 0;
+        private static  object lockObject = new object();
+
         static void Main(string[] args)
         {
-           Thread thread1 = new Thread (new ThreadStart (FirstThread));
-           Thread thread2 = new Thread(new ThreadStart(SecondThread));
-           Thread thread3 = new Thread(new ThreadStart(ThirdThread));
-            thread1.Start();
-            thread2.Start();
-            thread3.Start();
-            Console.WriteLine("Главный поток молчит");
-            Console.WriteLine("Завершение главного потока");
-            Console.ReadLine();
-        }
-        static void FirstThread()
-        {
-            for (int i = 0; i < 200; i++)
+            int N = 1;
+            while (N != 0)
             {
-                Console.WriteLine("Первый поток");
+                sum = 0;
+                lockObject = new object();
+                Console.Write("Введите число N: ");
+                N = int.Parse(Console.ReadLine());
+                Console.Write("Введите количество потоков: ");
+                int numberOfThreads = int.Parse(Console.ReadLine());
+
+
+                Thread[] threads = new Thread[numberOfThreads];
+                int range = N / numberOfThreads;
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                for (int i = 0; i < numberOfThreads; i++)
+                {
+                    int start = i * range + 1;
+                    int end = (i == numberOfThreads - 1) ? N : (i + 1) * range;
+
+                    threads[i] = new Thread(() => SumRange(start, end));
+                    threads[i].Start();
+                }
+
+                // Ожидание завершения всех потоков
+                for (int i = 0; i < numberOfThreads; i++)
+                {
+                    threads[i].Join();
+                }
+                sw.Stop();
+                long ticksForBuilder = sw.ElapsedMilliseconds;
+                Console.WriteLine("Производительность = " + ticksForBuilder);
+                sw.Reset();
+                Console.WriteLine($"Сумма всех чисел от 1 до {N} равна {sum}");
+                Console.ReadKey();
             }
         }
-        static void SecondThread()
+
+        static void SumRange(int start, int end)
         {
-            for (int i = 0; i < 200; i++)
+            long localSum = 0;
+
+            for (int i = start; i <= end; i++)
             {
-                Console.WriteLine("Второй поток");
+                localSum += i;
+            }
+
+            // Блокировка для безопасного доступа к переменной sum
+            lock (lockObject)
+            {
+                sum += localSum;
             }
         }
-        static void ThirdThread()
-        {
-            for (int i = 0; i < 200; i++)
-            {
-                Console.WriteLine("Третий поток");
-            }
-        }
+
     }
 }
